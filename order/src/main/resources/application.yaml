@@ -1,0 +1,63 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: order-service
+
+  cloud:
+    openfeign:
+      client:
+        config:
+          product-service:
+            connectTimeout: 2000
+            readTimeout: 3000
+            loggerLevel: basic
+
+product:
+  service:
+    url: http://localhost:8082
+
+resilience4j:
+
+  circuitbreaker:
+    instances:
+      productService:
+        registerHealthIndicator: true
+
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 5
+        minimumNumberOfCalls: 5
+
+        failureRateThreshold: 50
+
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 2
+
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+
+  retry:
+    instances:
+      productService:
+        maxAttempts: 2
+        waitDuration: 500ms
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,circuitbreakers,circuitbreakerevents,retries
+
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+
+  health:
+    circuitbreakers:
+      enabled: true
+
+  metrics:
+    tags:
+      application: ${spring.application.name}
